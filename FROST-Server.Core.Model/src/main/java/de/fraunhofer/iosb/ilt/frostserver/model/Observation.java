@@ -17,6 +17,9 @@
  */
 package de.fraunhofer.iosb.ilt.frostserver.model;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.fraunhofer.iosb.ilt.frostserver.model.core.AbstractEntity;
 import de.fraunhofer.iosb.ilt.frostserver.model.core.Id;
 import de.fraunhofer.iosb.ilt.frostserver.model.ext.TimeInstant;
@@ -28,8 +31,7 @@ import de.fraunhofer.iosb.ilt.frostserver.path.PathElementEntitySet;
 import de.fraunhofer.iosb.ilt.frostserver.property.EntityProperty;
 import de.fraunhofer.iosb.ilt.frostserver.property.NavigationPropertyMain;
 import de.fraunhofer.iosb.ilt.frostserver.util.exception.IncompleteEntityException;
-import java.util.HashMap;
-import java.util.Map;
+import java.math.BigDecimal;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,10 +48,10 @@ public class Observation extends AbstractEntity<Observation> {
     private static final Logger LOGGER = LoggerFactory.getLogger(Observation.class);
     private TimeValue phenomenonTime;
     private TimeInstant resultTime;
-    private Object result;
-    private Object resultQuality;
+    private JsonNode result;
+    private JsonNode resultQuality;
     private TimeInterval validTime;
-    private Map<String, Object> parameters;
+    private ObjectNode parameters;
     private Datastream datastream;
     private MultiDatastream multiDatastream;
     private FeatureOfInterest featureOfInterest;
@@ -214,25 +216,41 @@ public class Observation extends AbstractEntity<Observation> {
         return setResultTime;
     }
 
-    public Object getResult() {
+    public JsonNode getResult() {
         return result;
     }
 
-    public Observation setResult(Object result) {
+    public Observation setResult(JsonNode result) {
         this.result = result;
         setResult = true;
         return this;
+    }
+
+    public Observation setResult(int result) {
+        return setResult(JsonNodeFactory.instance.numberNode(result));
+    }
+
+    public Observation setResult(double result) {
+        return setResult(JsonNodeFactory.instance.numberNode(result));
+    }
+
+    public Observation setResult(BigDecimal result) {
+        return setResult(JsonNodeFactory.instance.numberNode(result));
+    }
+
+    public Observation setResult(String result) {
+        return setResult(JsonNodeFactory.instance.textNode(result));
     }
 
     public boolean isSetResult() {
         return setResult;
     }
 
-    public Object getResultQuality() {
+    public JsonNode getResultQuality() {
         return resultQuality;
     }
 
-    public Observation setResultQuality(Object resultQuality) {
+    public Observation setResultQuality(JsonNode resultQuality) {
         this.resultQuality = resultQuality;
         setResultQuality = resultQuality != null;
         return this;
@@ -256,12 +274,12 @@ public class Observation extends AbstractEntity<Observation> {
         return setValidTime;
     }
 
-    public Map<String, Object> getParameters() {
+    public ObjectNode getParameters() {
         return parameters;
     }
 
-    public void setParameters(Map<String, Object> parameters) {
-        if (parameters != null && parameters.isEmpty()) {
+    public void setParameters(ObjectNode parameters) {
+        if (parameters != null && parameters.size() == 0) {
             this.parameters = null;
         } else {
             this.parameters = parameters;
@@ -269,9 +287,18 @@ public class Observation extends AbstractEntity<Observation> {
         setParameters = true;
     }
 
-    public Observation addParameter(String name, Object value) {
+    public Observation addParameter(String name, JsonNode value) {
         if (parameters == null) {
-            parameters = new HashMap<>();
+            parameters = JsonNodeFactory.instance.objectNode();
+        }
+        parameters.set(name, value);
+        setParameters = true;
+        return this;
+    }
+
+    public Observation addParameter(String name, String value) {
+        if (parameters == null) {
+            parameters = JsonNodeFactory.instance.objectNode();
         }
         parameters.put(name, value);
         setParameters = true;

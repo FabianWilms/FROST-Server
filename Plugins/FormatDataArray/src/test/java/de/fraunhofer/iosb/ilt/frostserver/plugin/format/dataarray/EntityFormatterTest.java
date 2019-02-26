@@ -25,24 +25,18 @@ import de.fraunhofer.iosb.ilt.frostserver.model.MultiDatastream;
 import de.fraunhofer.iosb.ilt.frostserver.util.SimpleJsonMapper;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 /**
  *
  * @author jab
  */
 public class EntityFormatterTest {
-
-    @Rule
-    public final ExpectedException exception = ExpectedException.none();
 
     @BeforeClass
     public static void setUp() {
@@ -61,20 +55,38 @@ public class EntityFormatterTest {
         Datastream ds1 = new Datastream().setNavigationLink("navLinkHere");
 
         DataArrayValue dav1 = new DataArrayValue(ds1, components);
-        dav1.getDataArray().add(Arrays.asList(new Object[]{446, "2010-12-23T10:20:00.000Z", 48}));
-        dav1.getDataArray().add(Arrays.asList(new Object[]{447, "2010-12-23T10:21:00.000Z", 49}));
+        dav1.newItemList()
+                .addItemToTail(446)
+                .addItemToTail("2010-12-23T10:20:00.000Z")
+                .addItemToTail(48);
+        dav1.newItemList()
+                .addItemToTail(447)
+                .addItemToTail("2010-12-23T10:21:00.000Z")
+                .addItemToTail(49);
 
         Datastream ds2 = new Datastream().setNavigationLink("navLinkHere");
 
         DataArrayValue dav2 = new DataArrayValue(ds2, components);
-        dav2.getDataArray().add(Arrays.asList(new Object[]{448, "2010-12-23T10:20:00.000Z", 1}));
-        dav2.getDataArray().add(Arrays.asList(new Object[]{449, "2010-12-23T10:21:00.000Z", 2}));
+        dav2.newItemList()
+                .addItemToTail(448)
+                .addItemToTail("2010-12-23T10:20:00.000Z")
+                .addItemToTail(1);
+        dav2.newItemList()
+                .addItemToTail(449)
+                .addItemToTail("2010-12-23T10:21:00.000Z")
+                .addItemToTail(2);
 
         MultiDatastream mds1 = new MultiDatastream().setNavigationLink("navLinkHere");
 
         DataArrayValue dav3 = new DataArrayValue(mds1, components);
-        dav3.getDataArray().add(Arrays.asList(new Object[]{444, "2010-12-23T10:20:00.000Z", 5}));
-        dav3.getDataArray().add(Arrays.asList(new Object[]{445, "2010-12-23T10:21:00.000Z", 6}));
+        dav3.newItemList()
+                .addItemToTail(444)
+                .addItemToTail("2010-12-23T10:20:00.000Z")
+                .addItemToTail(5);
+        dav3.newItemList()
+                .addItemToTail(445)
+                .addItemToTail("2010-12-23T10:21:00.000Z")
+                .addItemToTail(6);
 
         DataArrayResult source = new DataArrayResult();
         source.setNextLink("nextLinkHere");

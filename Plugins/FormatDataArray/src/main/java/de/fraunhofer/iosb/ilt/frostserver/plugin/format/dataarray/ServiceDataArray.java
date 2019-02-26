@@ -17,6 +17,7 @@
  */
 package de.fraunhofer.iosb.ilt.frostserver.plugin.format.dataarray;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import static de.fraunhofer.iosb.ilt.frostserver.formatter.PluginResultFormatDefault.DEFAULT_FORMAT_NAME;
 import de.fraunhofer.iosb.ilt.frostserver.formatter.ResultFormatter;
 import de.fraunhofer.iosb.ilt.frostserver.json.deserialize.EntityParser;
@@ -107,7 +108,7 @@ public class ServiceDataArray {
 
     private void handleDataArrayItems(String serviceRootUrl, List<ArrayValueHandlers.ArrayValueHandler> handlers, DataArrayValue daValue, Datastream datastream, MultiDatastream multiDatastream, PersistenceManager pm, List<String> selfLinks) {
         int compCount = handlers.size();
-        for (List<Object> entry : daValue.getDataArray()) {
+        for (List<JsonNode> entry : daValue.getDataArray()) {
             try {
                 Observation observation = new Observation();
                 observation.setDatastream(datastream);

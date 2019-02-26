@@ -47,6 +47,7 @@ import de.fraunhofer.iosb.ilt.frostserver.persistence.pgjooq.PostgresPersistence
 import de.fraunhofer.iosb.ilt.frostserver.persistence.pgjooq.QueryBuilder;
 import de.fraunhofer.iosb.ilt.frostserver.persistence.pgjooq.Utils;
 import static de.fraunhofer.iosb.ilt.frostserver.persistence.pgjooq.Utils.getFieldOrNull;
+import de.fraunhofer.iosb.ilt.frostserver.persistence.pgjooq.bindings.JsonValue;
 import de.fraunhofer.iosb.ilt.frostserver.persistence.pgjooq.tables.AbstractTableDatastreams;
 import de.fraunhofer.iosb.ilt.frostserver.persistence.pgjooq.tables.AbstractTableLocations;
 import de.fraunhofer.iosb.ilt.frostserver.persistence.pgjooq.tables.AbstractTableMultiDatastreams;
@@ -577,6 +578,10 @@ public class EntityFactories<J extends Comparable> {
     public static Object reParseGeometry(String encodingType, Object object) {
         String json = objectToJson(object);
         return Utils.locationFromEncoding(encodingType, json);
+    }
+
+    public static String objectToJson(JsonValue jsonValue) {
+        return objectToJson(jsonValue.getValue());
     }
 
     public static String objectToJson(Object object) {

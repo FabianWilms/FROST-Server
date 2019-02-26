@@ -17,6 +17,13 @@
  */
 package de.fraunhofer.iosb.ilt.frostserver.persistence.pgjooq.factories;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.BooleanNode;
+import com.fasterxml.jackson.databind.node.DecimalNode;
+import com.fasterxml.jackson.databind.node.DoubleNode;
+import com.fasterxml.jackson.databind.node.NullNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import de.fraunhofer.iosb.ilt.frostserver.model.Datastream;
 import de.fraunhofer.iosb.ilt.frostserver.model.EntityChangedMessage;
 import de.fraunhofer.iosb.ilt.frostserver.model.EntityType;
@@ -31,6 +38,7 @@ import de.fraunhofer.iosb.ilt.frostserver.persistence.pgjooq.PostgresPersistence
 import de.fraunhofer.iosb.ilt.frostserver.persistence.pgjooq.ResultType;
 import de.fraunhofer.iosb.ilt.frostserver.persistence.pgjooq.Utils;
 import static de.fraunhofer.iosb.ilt.frostserver.persistence.pgjooq.Utils.getFieldOrNull;
+import de.fraunhofer.iosb.ilt.frostserver.persistence.pgjooq.bindings.JsonValue;
 import static de.fraunhofer.iosb.ilt.frostserver.persistence.pgjooq.factories.EntityFactories.CAN_NOT_BE_NULL;
 import static de.fraunhofer.iosb.ilt.frostserver.persistence.pgjooq.factories.EntityFactories.CHANGED_MULTIPLE_ROWS;
 import de.fraunhofer.iosb.ilt.frostserver.persistence.pgjooq.tables.AbstractTableMultiDatastreamsObsProperties;
@@ -46,7 +54,6 @@ import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.jooq.DSLContext;
@@ -101,9 +108,9 @@ public class ObservationFactory<J extends Comparable> implements EntityFactory<O
         }
 
         if (select.isEmpty() || select.contains(EntityProperty.PARAMETERS)) {
-            String props = getFieldOrNull(tuple, table.colParameters);
-            dataSize.increase(props == null ? 0 : props.length());
-            entity.setParameters(Utils.jsonToObject(props, Map.class));
+            JsonValue props = Utils.getFieldJsonValue(tuple, table.colParameters);
+            dataSize.increase(props.getStringLength());
+            entity.setParameters(props.getObjectValue());
         }
 
         OffsetDateTime pTimeStart = getFieldOrNull(tuple, table.colPhenomenonTimeStart);
@@ -124,9 +131,9 @@ public class ObservationFactory<J extends Comparable> implements EntityFactory<O
 
     private void readResultQuality(Set<Property> select, Record tuple, DataSize dataSize, Observation entity) {
         if (select.isEmpty() || select.contains(EntityProperty.RESULTQUALITY)) {
-            String resultQuality = getFieldOrNull(tuple, table.colResultQuality);
-            dataSize.increase(resultQuality == null ? 0 : resultQuality.length());
-            entity.setResultQuality(Utils.jsonToObject(resultQuality, Object.class));
+            JsonValue resultQuality = Utils.getFieldJsonValue(tuple, table.colResultQuality);
+            dataSize.increase(resultQuality.getStringLength());
+            entity.setResultQuality(resultQuality.getValue());
         }
     }
 
@@ -139,28 +146,28 @@ public class ObservationFactory<J extends Comparable> implements EntityFactory<O
             ResultType resultType = ResultType.fromSqlValue(resultTypeOrd);
             switch (resultType) {
                 case BOOLEAN:
-                    entity.setResult(getFieldOrNull(tuple, table.colResultBoolean));
+                    entity.setResult(BooleanNode.valueOf(getFieldOrNull(tuple, table.colResultBoolean)));
                     break;
 
                 case NUMBER:
                     try {
-                        entity.setResult(new BigDecimal(getFieldOrNull(tuple, table.colResultString)));
-                    } catch (NumberFormatException | NullPointerException e) {
-                        // It was not a Number? Use the double value.
-                        entity.setResult(getFieldOrNull(tuple, table.colResultNumber));
-                    }
-                    break;
+                    entity.setResult(DecimalNode.valueOf(new BigDecimal(getFieldOrNull(tuple, table.colResultString))));
+                } catch (NumberFormatException e) {
+                    // It was not a Number? Use the double value.
+                    entity.setResult(DoubleNode.valueOf(getFieldOrNull(tuple, table.colResultNumber)));
+                }
+                break;
 
                 case OBJECT_ARRAY:
-                    String jsonData = getFieldOrNull(tuple, table.colResultJson);
-                    dataSize.increase(jsonData == null ? 0 : jsonData.length());
-                    entity.setResult(Utils.jsonToTree(jsonData));
+                    JsonValue jsonData = getFieldOrNull(tuple, table.colResultJson);
+                    dataSize.increase(jsonData == null ? 0 : jsonData.getStringLength());
+                    entity.setResult(jsonData == null ? NullNode.instance : jsonData.getValue());
                     break;
 
                 case STRING:
                     String stringData = getFieldOrNull(tuple, table.colResultString);
                     dataSize.increase(stringData == null ? 0 : stringData.length());
-                    entity.setResult(stringData);
+                    entity.setResult(TextNode.valueOf(stringData));
                     break;
 
                 default:
@@ -299,12 +306,12 @@ public class ObservationFactory<J extends Comparable> implements EntityFactory<O
     }
 
     private void handleResult(Observation newObservation, boolean newIsMultiDatastream, PostgresPersistenceManager<J> pm, Map<Field, Object> record) {
-        Object result = newObservation.getResult();
+        JsonNode result = newObservation.getResult();
         if (newIsMultiDatastream) {
-            if (!(result instanceof List)) {
+            if (!(result.isArray())) {
                 throw new IllegalArgumentException("Multidatastream only accepts array results.");
             }
-            List list = (List) result;
+            ArrayNode list = (ArrayNode) result;
             MultiDatastream mds = newObservation.getMultiDatastream();
             J mdsId = (J) mds.getId().getValue();
             AbstractTableMultiDatastreamsObsProperties<J> tableMdsOps = tableCollection.getTableMultiDatastreamsObsProperties();
@@ -318,27 +325,27 @@ public class ObservationFactory<J extends Comparable> implements EntityFactory<O
             }
         }
 
-        if (result instanceof Number) {
+        if (result.isNumber()) {
             record.put(table.colResultType, ResultType.NUMBER.sqlValue());
-            record.put(table.colResultString, result.toString());
-            record.put(table.colResultNumber, ((Number) result).doubleValue());
+            record.put(table.colResultString, result.asText());
+            record.put(table.colResultNumber, result.asDouble());
             record.put(table.colResultBoolean, null);
             record.put(table.colResultJson, null);
-        } else if (result instanceof Boolean) {
+        } else if (result.isBoolean()) {
             record.put(table.colResultType, ResultType.BOOLEAN.sqlValue());
-            record.put(table.colResultString, result.toString());
-            record.put(table.colResultBoolean, result);
+            record.put(table.colResultString, result.asText());
+            record.put(table.colResultBoolean, result.asBoolean());
             record.put(table.colResultNumber, null);
             record.put(table.colResultJson, null);
-        } else if (result instanceof String) {
+        } else if (result.isTextual()) {
             record.put(table.colResultType, ResultType.STRING.sqlValue());
-            record.put(table.colResultString, result.toString());
+            record.put(table.colResultString, result.asText());
             record.put(table.colResultNumber, null);
             record.put(table.colResultBoolean, null);
             record.put(table.colResultJson, null);
         } else {
             record.put(table.colResultType, ResultType.OBJECT_ARRAY.sqlValue());
-            record.put(table.colResultJson, EntityFactories.objectToJson(result));
+            record.put(table.colResultJson, new JsonValue(result));
             record.put(table.colResultString, null);
             record.put(table.colResultNumber, null);
             record.put(table.colResultBoolean, null);

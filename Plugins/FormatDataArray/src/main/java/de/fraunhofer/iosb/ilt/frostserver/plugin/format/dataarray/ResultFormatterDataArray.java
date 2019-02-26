@@ -17,6 +17,8 @@
  */
 package de.fraunhofer.iosb.ilt.frostserver.plugin.format.dataarray;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import de.fraunhofer.iosb.ilt.frostserver.formatter.ResultFormatter;
 import de.fraunhofer.iosb.ilt.frostserver.json.serialize.EntityFormatter;
 import de.fraunhofer.iosb.ilt.frostserver.model.EntityType;
@@ -29,12 +31,14 @@ import de.fraunhofer.iosb.ilt.frostserver.property.EntityProperty;
 import de.fraunhofer.iosb.ilt.frostserver.property.NavigationPropertyMain;
 import de.fraunhofer.iosb.ilt.frostserver.property.Property;
 import de.fraunhofer.iosb.ilt.frostserver.query.Query;
+import de.fraunhofer.iosb.ilt.frostserver.util.SimpleJsonMapper;
 import de.fraunhofer.iosb.ilt.frostserver.util.exception.IncorrectRequestException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -149,25 +153,27 @@ public class ResultFormatterDataArray implements ResultFormatter {
             return components;
         }
 
-        public List<Object> fromObservation(Observation o) {
-            List<Object> value = new ArrayList<>();
+        public List<JsonNode> fromObservation(Observation o) {
+            JsonNodeFactory jnf = JsonNodeFactory.instance;
+            List<JsonNode> value = new ArrayList<>();
             if (id) {
-                value.add(o.getId().getValue());
+                JsonNode idNode = SimpleJsonMapper.getSimpleObjectMapper().valueToTree(o.getId());
+                value.add(idNode);
             }
             if (phenomenonTime) {
-                value.add(o.getPhenomenonTime());
+                value.add(jnf.textNode(Objects.toString(o.getPhenomenonTime())));
             }
             if (result) {
                 value.add(o.getResult());
             }
             if (resultTime) {
-                value.add(o.getResultTime());
+                value.add(jnf.textNode(Objects.toString(o.getResultTime())));
             }
             if (resultQuality) {
                 value.add(o.getResultQuality());
             }
             if (validTime) {
-                value.add(o.getValidTime());
+                value.add(jnf.textNode(Objects.toString(o.getValidTime())));
             }
             if (parameters) {
                 value.add(o.getParameters());

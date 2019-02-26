@@ -19,10 +19,12 @@ package de.fraunhofer.iosb.ilt.frostserver.persistence.pgjooq;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.NullNode;
 import de.fraunhofer.iosb.ilt.frostserver.json.deserialize.custom.GeoJsonDeserializier;
 import de.fraunhofer.iosb.ilt.frostserver.model.ext.TimeInstant;
 import de.fraunhofer.iosb.ilt.frostserver.model.ext.TimeInterval;
 import de.fraunhofer.iosb.ilt.frostserver.model.ext.TimeValue;
+import de.fraunhofer.iosb.ilt.frostserver.persistence.pgjooq.bindings.JsonValue;
 import de.fraunhofer.iosb.ilt.frostserver.query.OrderBy;
 import static de.fraunhofer.iosb.ilt.frostserver.util.Constants.UTC;
 import de.fraunhofer.iosb.ilt.frostserver.util.SimpleJsonMapper;
@@ -146,6 +148,14 @@ public class Utils {
         }
     }
 
+    public static JsonNode objectToTree(Object object) {
+        if (object == null) {
+            return NullNode.instance;
+        }
+
+        return SimpleJsonMapper.getSimpleObjectMapper().valueToTree(object);
+    }
+
     public static <T> T jsonToObject(String json, Class<T> clazz) {
         if (json == null) {
             return null;
@@ -155,6 +165,24 @@ public class Utils {
         } catch (IOException ex) {
             throw new IllegalStateException(FAILED_JSON_PARSE, ex);
         }
+    }
+
+    public static <T> T jsonToObject(JsonNode json, TypeReference<T> typeReference) {
+        if (json == null) {
+            return null;
+        }
+        try {
+            return SimpleJsonMapper.getSimpleObjectMapper().convertValue(json, typeReference);
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalStateException(FAILED_JSON_PARSE, ex);
+        }
+    }
+
+    public static <T> T jsonToObject(JsonValue json, TypeReference<T> typeReference) {
+        if (json == null) {
+            return null;
+        }
+        return jsonToObject(json.getValue(), typeReference);
     }
 
     public static <T> T jsonToObject(String json, TypeReference<T> typeReference) {
@@ -183,6 +211,14 @@ public class Utils {
             return record.get(field);
         }
         return null;
+    }
+    private static final JsonValue NULL_JSON_VALUE = new JsonValue((JsonNode) null);
+
+    public static JsonValue getFieldJsonValue(Record record, Field<JsonValue> field) {
+        if (record.field(field) != null) {
+            return record.get(field);
+        }
+        return NULL_JSON_VALUE;
     }
 
     public static class SortSelectFields {

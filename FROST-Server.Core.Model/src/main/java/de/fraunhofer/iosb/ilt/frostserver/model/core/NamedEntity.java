@@ -17,10 +17,11 @@
  */
 package de.fraunhofer.iosb.ilt.frostserver.model.core;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.fraunhofer.iosb.ilt.frostserver.model.EntityChangedMessage;
 import de.fraunhofer.iosb.ilt.frostserver.property.EntityProperty;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -33,7 +34,7 @@ public abstract class NamedEntity<T extends NamedEntity<T>> extends AbstractEnti
 
     private String name;
     private String description;
-    private Map<String, Object> properties;
+    private ObjectNode properties;
 
     private boolean setName;
     private boolean setDescription;
@@ -128,7 +129,7 @@ public abstract class NamedEntity<T extends NamedEntity<T>> extends AbstractEnti
     /**
      * @return the Properties map of the entity.
      */
-    public Map<String, Object> getProperties() {
+    public ObjectNode getProperties() {
         return properties;
     }
 
@@ -139,8 +140,8 @@ public abstract class NamedEntity<T extends NamedEntity<T>> extends AbstractEnti
      * will set the properties to null.
      * @return this
      */
-    public NamedEntity<T> setProperties(Map<String, Object> properties) {
-        if (properties != null && properties.isEmpty()) {
+    public NamedEntity<T> setProperties(ObjectNode properties) {
+        if (properties != null && properties.size() == 0) {
             this.properties = null;
         } else {
             this.properties = properties;
@@ -149,9 +150,18 @@ public abstract class NamedEntity<T extends NamedEntity<T>> extends AbstractEnti
         return getThis();
     }
 
-    public T addProperty(String name, Object value) {
+    public T addProperty(String name, JsonNode value) {
         if (properties == null) {
-            properties = new HashMap<>();
+            properties = JsonNodeFactory.instance.objectNode();
+        }
+        properties.set(name, value);
+        setProperties = true;
+        return getThis();
+    }
+
+    public T addProperty(String name, String value) {
+        if (properties == null) {
+            properties = JsonNodeFactory.instance.objectNode();
         }
         properties.put(name, value);
         setProperties = true;

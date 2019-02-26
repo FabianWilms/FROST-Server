@@ -720,7 +720,7 @@ public class EntityFormatterTest {
                 .setDatastream(new Datastream().setNavigationLink("Observations(1)/Datastream").setExportObject(false))
                 .setPhenomenonTime(TestHelper.createTimeInstantUTC(2014, 12, 31, 11, 59, 59))
                 .setResultTime(TestHelper.createTimeInstantUTC(2014, 12, 31, 19, 59, 59))
-                .setResult(null);
+                .setResult((JsonNode) null);
         Assert.assertTrue(jsonEqual(expResult, EntityFormatter.writeEntity(entity)));
     }
 

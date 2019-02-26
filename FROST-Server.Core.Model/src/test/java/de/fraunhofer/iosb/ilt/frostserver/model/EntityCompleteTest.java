@@ -17,6 +17,7 @@
  */
 package de.fraunhofer.iosb.ilt.frostserver.model;
 
+import com.fasterxml.jackson.databind.node.TextNode;
 import de.fraunhofer.iosb.ilt.frostserver.model.core.Entity;
 import de.fraunhofer.iosb.ilt.frostserver.model.core.EntitySet;
 import de.fraunhofer.iosb.ilt.frostserver.model.core.EntitySetImpl;
@@ -112,7 +113,7 @@ public class EntityCompleteTest {
         Observation entity = new Observation();
         Assert.assertFalse(isEntityComplete(entity, containingSet));
 
-        entity.setResult("result");
+        entity.setResult(new TextNode("result"));
         Assert.assertFalse(isEntityComplete(entity, containingSet));
 
         entity.setDatastream(new Datastream().setId(new IdLong(2)));
@@ -128,12 +129,12 @@ public class EntityCompleteTest {
 
         containingSet = new PathElementEntitySet(EntityType.OBSERVATION, new PathElementEntity(new IdLong(1), EntityType.DATASTREAM, null));
         entity = new Observation();
-        entity.setResult("result");
+        entity.setResult(new TextNode("result"));
         Assert.assertTrue(isEntityComplete(entity, containingSet));
 
         containingSet = new PathElementEntitySet(EntityType.OBSERVATION, new PathElementEntity(new IdLong(1), EntityType.MULTIDATASTREAM, null));
         entity = new Observation();
-        entity.setResult("result");
+        entity.setResult(new TextNode("result"));
         Assert.assertTrue(isEntityComplete(entity, containingSet));
 
     }

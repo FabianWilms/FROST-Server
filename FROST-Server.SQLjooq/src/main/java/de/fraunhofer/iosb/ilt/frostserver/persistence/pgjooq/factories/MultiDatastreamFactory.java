@@ -30,6 +30,7 @@ import de.fraunhofer.iosb.ilt.frostserver.persistence.pgjooq.DataSize;
 import de.fraunhofer.iosb.ilt.frostserver.persistence.pgjooq.PostgresPersistenceManager;
 import de.fraunhofer.iosb.ilt.frostserver.persistence.pgjooq.Utils;
 import static de.fraunhofer.iosb.ilt.frostserver.persistence.pgjooq.Utils.getFieldOrNull;
+import de.fraunhofer.iosb.ilt.frostserver.persistence.pgjooq.bindings.JsonValue;
 import static de.fraunhofer.iosb.ilt.frostserver.persistence.pgjooq.factories.EntityFactories.CAN_NOT_BE_NULL;
 import static de.fraunhofer.iosb.ilt.frostserver.persistence.pgjooq.factories.EntityFactories.CHANGED_MULTIPLE_ROWS;
 import static de.fraunhofer.iosb.ilt.frostserver.persistence.pgjooq.factories.EntityFactories.NO_ID_OR_NOT_FOUND;
@@ -113,8 +114,9 @@ public class MultiDatastreamFactory<J extends Comparable> implements EntityFacto
             entity.setResultTime(Utils.intervalFromTimes(rTimeStart, rTimeEnd));
         }
         if (select.isEmpty() || select.contains(EntityProperty.PROPERTIES)) {
-            String props = getFieldOrNull(tuple, table.colProperties);
-            entity.setProperties(Utils.jsonToObject(props, Map.class));
+            JsonValue props = Utils.getFieldJsonValue(tuple, table.colProperties);
+            dataSize.increase(props.getStringLength());
+            entity.setProperties(props.getObjectValue());
         }
         entity.setSensor(entityFactories.sensorFromId(tuple, table.getSensorId()));
         entity.setThing(entityFactories.thingFromId(tuple, table.getThingId()));
@@ -135,9 +137,9 @@ public class MultiDatastreamFactory<J extends Comparable> implements EntityFacto
         Map<Field, Object> insert = new HashMap<>();
         insert.put(table.colName, ds.getName());
         insert.put(table.colDescription, ds.getDescription());
-        insert.put(table.colObservationTypes, EntityFactories.objectToJson(ds.getMultiObservationDataTypes()));
-        insert.put(table.colUnitOfMeasurements, EntityFactories.objectToJson(ds.getUnitOfMeasurements()));
-        insert.put(table.colProperties, EntityFactories.objectToJson(ds.getProperties()));
+        insert.put(table.colObservationTypes, new JsonValue(ds.getMultiObservationDataTypes()));
+        insert.put(table.colUnitOfMeasurements, new JsonValue(ds.getUnitOfMeasurements()));
+        insert.put(table.colProperties, new JsonValue(ds.getProperties()));
 
         insert.put(table.getSensorId(), s.getId().getValue());
         insert.put(table.getThingId(), t.getId().getValue());
@@ -251,7 +253,7 @@ public class MultiDatastreamFactory<J extends Comparable> implements EntityFacto
 
     private void updateProperties(MultiDatastream md, Map<Field, Object> update, EntityChangedMessage message) {
         if (md.isSetProperties()) {
-            update.put(table.colProperties, EntityFactories.objectToJson(md.getProperties()));
+            update.put(table.colProperties, new JsonValue(md.getProperties()));
             message.addField(EntityProperty.PROPERTIES);
         }
     }
@@ -284,7 +286,7 @@ public class MultiDatastreamFactory<J extends Comparable> implements EntityFacto
             }
             List<UnitOfMeasurement> uoms = md.getUnitOfMeasurements();
             countUom = uoms.size();
-            update.put(table.colUnitOfMeasurements, EntityFactories.objectToJson(uoms));
+            update.put(table.colUnitOfMeasurements, new JsonValue(uoms));
             message.addField(EntityProperty.UNITOFMEASUREMENTS);
         }
         return countUom;
@@ -298,7 +300,7 @@ public class MultiDatastreamFactory<J extends Comparable> implements EntityFacto
                 throw new IncompleteEntityException("multiObservationDataTypes" + CAN_NOT_BE_NULL);
             }
             countDataTypes = dataTypes.size();
-            update.put(table.colObservationTypes, EntityFactories.objectToJson(dataTypes));
+            update.put(table.colObservationTypes, new JsonValue(dataTypes));
             message.addField(EntityProperty.MULTIOBSERVATIONDATATYPES);
         }
         return countDataTypes;

@@ -17,6 +17,11 @@
  */
 package de.fraunhofer.iosb.ilt.frostserver.util;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.NumericNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import de.fraunhofer.iosb.ilt.frostserver.model.EntityType;
 import de.fraunhofer.iosb.ilt.frostserver.model.Observation;
 import de.fraunhofer.iosb.ilt.frostserver.model.core.Entity;
@@ -27,6 +32,7 @@ import de.fraunhofer.iosb.ilt.frostserver.settings.CoreSettings;
 import de.fraunhofer.iosb.ilt.frostserver.settings.Settings;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -82,19 +88,20 @@ public class CustomLinksHelper {
         }
     }
 
-    public static void expandCustomLinks(Map<String, Object> properties, ResourcePath path, int recurseDepth) {
+    public static void expandCustomLinks(ObjectNode properties, ResourcePath path, int recurseDepth) {
         if (properties == null) {
             return;
         }
-        Map<String, Object> toAdd = new LinkedHashMap<>();
-        for (Map.Entry<String, Object> propertyEntry : properties.entrySet()) {
-            Object value = propertyEntry.getValue();
-            if (value instanceof Map) {
-                Map<String, Object> subMap = (Map<String, Object>) value;
+        Map<String, JsonNode> toAdd = new LinkedHashMap<>();
+        for (Iterator<Map.Entry<String, JsonNode>> it = properties.fields(); it.hasNext();) {
+            Map.Entry<String, JsonNode> propertyEntry = it.next();
+            JsonNode value = propertyEntry.getValue();
+            if (value instanceof ObjectNode) {
+                ObjectNode subMap = (ObjectNode) value;
                 if (recurseDepth > 0) {
                     expandCustomLinks(subMap, path, recurseDepth - 1);
                 }
-            } else if (value instanceof Number || value instanceof String) {
+            } else if (value instanceof NumericNode || value instanceof TextNode) {
                 String key = propertyEntry.getKey();
                 Matcher matcher = ENTITY_LINK_NAME_PATTERN.matcher(key);
                 if (matcher.matches()) {
@@ -102,11 +109,12 @@ public class CustomLinksHelper {
                     EntityType type = EntityType.getEntityTypeForName(matcher.group(2));
                     Object id = propertyEntry.getValue();
                     String navLinkName = name + "." + type.entityName + AT_IOT_NAVIGATION_LINK;
-                    toAdd.put(navLinkName, UrlHelper.generateSelfLink(path.getServiceRootUrl(), type, id));
+                    final String selfLink = UrlHelper.generateSelfLink(path.getServiceRootUrl(), type, id);
+                    toAdd.put(navLinkName, JsonNodeFactory.instance.textNode(selfLink));
                 }
             }
         }
-        properties.putAll(toAdd);
+        properties.setAll(toAdd);
     }
 
     public static void cleanPropertiesMap(CoreSettings settings, Entity<?> entity) {
@@ -122,19 +130,21 @@ public class CustomLinksHelper {
         }
     }
 
-    public static void cleanPropertiesMap(Map<String, Object> properties, int recurseDepth) {
+    public static void cleanPropertiesMap(ObjectNode properties, int recurseDepth) {
         if (properties == null) {
             return;
         }
         List<String> toRemove = new ArrayList<>();
-        for (Map.Entry<String, Object> propertyEntry : properties.entrySet()) {
-            Object value = propertyEntry.getValue();
-            if (value instanceof Map) {
-                Map<String, Object> subMap = (Map<String, Object>) value;
+
+        for (Iterator<Map.Entry<String, JsonNode>> it = properties.fields(); it.hasNext();) {
+            Map.Entry<String, JsonNode> propertyEntry = it.next();
+            JsonNode value = propertyEntry.getValue();
+            if (value instanceof ObjectNode) {
+                ObjectNode subMap = (ObjectNode) value;
                 if (recurseDepth > 0) {
                     cleanPropertiesMap(subMap, recurseDepth - 1);
                 }
-            } else if (value instanceof Number || value instanceof String) {
+            } else if (value instanceof NumericNode || value instanceof TextNode) {
                 String key = propertyEntry.getKey();
                 Matcher matcher = ENTITY_LINK_NAME_PATTERN.matcher(key);
                 if (matcher.matches()) {

@@ -19,6 +19,8 @@ package de.fraunhofer.iosb.ilt.frostserver.plugin.format.dataarray;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import de.fraunhofer.iosb.ilt.frostserver.model.Datastream;
 import de.fraunhofer.iosb.ilt.frostserver.model.MultiDatastream;
 import de.fraunhofer.iosb.ilt.frostserver.model.Observation;
@@ -46,7 +48,7 @@ public class DataArrayValue {
     private Datastream datastream;
     private MultiDatastream multiDatastream;
     private List<String> components;
-    private List<List<Object>> dataArray = new ArrayList<>();
+    private List<List<JsonNode>> dataArray = new ArrayList<>();
 
     public DataArrayValue() {
     }
@@ -103,12 +105,32 @@ public class DataArrayValue {
         this.components = components;
     }
 
-    public List<List<Object>> getDataArray() {
+    public List<List<JsonNode>> getDataArray() {
         return dataArray;
     }
 
-    public void setDataArray(List<List<Object>> dataArray) {
+    public void setDataArray(List<List<JsonNode>> dataArray) {
         this.dataArray = dataArray;
+    }
+
+    public DataArrayValue newItemList() {
+        dataArray.add(new ArrayList<>());
+        return this;
+    }
+
+    public DataArrayValue addItemToTail(String item) {
+        return addItemToTail(JsonNodeFactory.instance.textNode(item));
+    }
+
+    public DataArrayValue addItemToTail(int item) {
+        return addItemToTail(JsonNodeFactory.instance.numberNode(item));
+    }
+
+    public DataArrayValue addItemToTail(JsonNode item) {
+        dataArray
+                .get(dataArray.size() - 1)
+                .add(item);
+        return this;
     }
 
     @Override

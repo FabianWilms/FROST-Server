@@ -17,6 +17,7 @@
  */
 package de.fraunhofer.iosb.ilt.frostserver.model;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.fraunhofer.iosb.ilt.frostserver.model.core.AbstractEntity;
 import de.fraunhofer.iosb.ilt.frostserver.model.core.Id;
 import de.fraunhofer.iosb.ilt.frostserver.model.ext.TimeInstant;
@@ -26,7 +27,6 @@ import de.fraunhofer.iosb.ilt.frostserver.path.PathElementEntitySet;
 import de.fraunhofer.iosb.ilt.frostserver.property.EntityProperty;
 import de.fraunhofer.iosb.ilt.frostserver.property.NavigationPropertyMain;
 import de.fraunhofer.iosb.ilt.frostserver.util.exception.IncompleteEntityException;
-import java.util.Map;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +43,7 @@ public class Task extends AbstractEntity<Task> {
     private static final Logger LOGGER = LoggerFactory.getLogger(Task.class);
 
     private TimeInstant creationTime;
-    private Map<String, Object> taskingParameters;
+    private ObjectNode taskingParameters;
     private TaskingCapability taskingCapability;
 
     private boolean setCreationTime;
@@ -127,13 +127,13 @@ public class Task extends AbstractEntity<Task> {
         return setCreationTime;
     }
 
-    public Map<String, Object> getTaskingParameters() {
+    public ObjectNode getTaskingParameters() {
         return taskingParameters;
     }
 
-    public void setTaskingParameters(Map<String, Object> taskingParameters) {
+    public void setTaskingParameters(ObjectNode taskingParameters) {
         setTaskingParameters = true;
-        if (taskingParameters == null || taskingParameters.isEmpty()) {
+        if (taskingParameters == null || taskingParameters.size() == 0) {
             this.taskingParameters = null;
         } else {
             this.taskingParameters = taskingParameters;

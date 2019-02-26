@@ -17,6 +17,8 @@
  */
 package de.fraunhofer.iosb.ilt.frostserver.util;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.fraunhofer.iosb.ilt.frostserver.model.FeatureOfInterest;
 import de.fraunhofer.iosb.ilt.frostserver.model.Observation;
 import de.fraunhofer.iosb.ilt.frostserver.model.core.Id;
@@ -59,66 +61,76 @@ public class ArrayValueHandlers {
         }
 
         final IdManager idManager = PersistenceManagerFactory.getInstance().getIdManager();
-        ArrayValueHandler idHandler = (Object value, Observation target) -> target.setId(idManager.parseId(value.toString()));
+        ArrayValueHandler idHandler = (JsonNode value, Observation target) -> target.setId(idManager.parseId(value.toString()));
         HANDLERS.put("id", idHandler);
         HANDLERS.put(AT_IOT_ID, idHandler);
         HANDLERS.put(
                 "result",
-                (Object value, Observation target) -> target.setResult(value)
+                (JsonNode value, Observation target) -> target.setResult((JsonNode) value)
         );
         HANDLERS.put(
                 "resultQuality",
-                (Object value, Observation target) -> target.setResultQuality(value)
+                (JsonNode value, Observation target) -> target.setResultQuality((JsonNode) value)
         );
-        HANDLERS.put("parameters", (Object value, Observation target) -> {
-            if (value instanceof Map) {
-                target.setParameters((Map<String, Object>) value);
-                return;
-            }
-            throw new IllegalArgumentException("parameters has to be a map.");
-        });
-        HANDLERS.put("phenomenonTime", (Object value, Observation target) -> {
-            try {
-                TimeInstant time = TimeInstant.parse(value.toString());
-                target.setPhenomenonTime(time);
-                return;
-            } catch (Exception e) {
-                LOGGER.trace("Not a time instant: {}.", value);
-            }
-            try {
-                TimeInterval time = TimeInterval.parse(value.toString());
-                target.setPhenomenonTime(time);
-                return;
-            } catch (Exception e) {
-                LOGGER.trace("Not a time interval: {}.", value);
-            }
-            throw new IllegalArgumentException("phenomenonTime could not be parsed as time instant or time interval.");
-        });
-        HANDLERS.put("resultTime", (Object value, Observation target) -> {
-            try {
-                TimeInstant time = TimeInstant.parse(value.toString());
-                target.setResultTime(time);
-            } catch (Exception e) {
-                throw new IllegalArgumentException("resultTime could not be parsed as time instant or time interval.", e);
-            }
-        });
-        HANDLERS.put("validTime", (Object value, Observation target) -> {
-            try {
-                TimeInterval time = TimeInterval.parse(value.toString());
-                target.setValidTime(time);
-            } catch (Exception e) {
-                throw new IllegalArgumentException("resultTime could not be parsed as time instant or time interval.", e);
-            }
-        });
-        HANDLERS.put("FeatureOfInterest/id", (Object value, Observation target) -> {
-            Id foiId = idManager.parseId(value.toString());
-            target.setFeatureOfInterest(new FeatureOfInterest(foiId));
-        });
+        HANDLERS.put(
+                "parameters",
+                (JsonNode value, Observation target) -> {
+                    if (value instanceof ObjectNode) {
+                        target.setParameters((ObjectNode) value);
+                        return;
+                    }
+                    throw new IllegalArgumentException("parameters has to be an ObjectNode.");
+                });
+        HANDLERS.put(
+                "phenomenonTime",
+                (JsonNode value, Observation target) -> {
+                    try {
+                        TimeInstant time = TimeInstant.parse(value.textValue());
+                        target.setPhenomenonTime(time);
+                        return;
+                    } catch (Exception e) {
+                        LOGGER.trace("Not a time instant: {}.", value);
+                    }
+                    try {
+                        TimeInterval time = TimeInterval.parse(value.textValue());
+                        target.setPhenomenonTime(time);
+                        return;
+                    } catch (Exception e) {
+                        LOGGER.trace("Not a time interval: {}.", value);
+                    }
+                    throw new IllegalArgumentException("phenomenonTime could not be parsed as time instant or time interval.");
+                });
+        HANDLERS.put(
+                "resultTime",
+                (JsonNode value, Observation target) -> {
+                    try {
+                        TimeInstant time = TimeInstant.parse(value.textValue());
+                        target.setResultTime(time);
+                    } catch (Exception e) {
+                        throw new IllegalArgumentException("resultTime could not be parsed as time instant or time interval.", e);
+                    }
+                });
+        HANDLERS.put(
+                "validTime",
+                (JsonNode value, Observation target) -> {
+                    try {
+                        TimeInterval time = TimeInterval.parse(value.textValue());
+                        target.setValidTime(time);
+                    } catch (Exception e) {
+                        throw new IllegalArgumentException("resultTime could not be parsed as time instant or time interval.", e);
+                    }
+                });
+        HANDLERS.put(
+                "FeatureOfInterest/id",
+                (JsonNode value, Observation target) -> {
+                    Id foiId = idManager.parseId(value.asText());
+                    target.setFeatureOfInterest(new FeatureOfInterest(foiId));
+                });
 
     }
 
     public interface ArrayValueHandler {
 
-        public void handle(Object value, Observation target);
+        public void handle(JsonNode value, Observation target);
     }
 }

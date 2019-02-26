@@ -18,6 +18,8 @@
 package de.fraunhofer.iosb.ilt.frostserver.deserialize;
 
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.fraunhofer.iosb.ilt.frostserver.json.deserialize.EntityParser;
 import de.fraunhofer.iosb.ilt.frostserver.model.Datastream;
 import de.fraunhofer.iosb.ilt.frostserver.model.EntityType;
@@ -38,9 +40,7 @@ import de.fraunhofer.iosb.ilt.frostserver.util.TestHelper;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -846,9 +846,9 @@ public class EntityParserTest {
                 + "		} 		\n"
                 + "    }\n"
                 + "}";
-        Map<String, Object> property3 = new HashMap<>();
-        property3.put("someNestedProperty", 10);
-        property3.put("someOtherNestedProperty", "someValue");
+        ObjectNode property3 = JsonNodeFactory.instance.objectNode()
+                .put("someNestedProperty", 10)
+                .put("someOtherNestedProperty", "someValue");
         Thing expectedResult = new Thing()
                 .setName("camping lantern")
                 .setDescription("camping lantern")

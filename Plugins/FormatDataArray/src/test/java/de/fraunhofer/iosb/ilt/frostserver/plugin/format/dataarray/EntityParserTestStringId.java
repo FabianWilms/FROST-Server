@@ -20,7 +20,7 @@ package de.fraunhofer.iosb.ilt.frostserver.plugin.format.dataarray;
 import de.fraunhofer.iosb.ilt.frostserver.json.deserialize.EntityParser;
 import de.fraunhofer.iosb.ilt.frostserver.model.Datastream;
 import de.fraunhofer.iosb.ilt.frostserver.model.MultiDatastream;
-import de.fraunhofer.iosb.ilt.frostserver.model.core.IdLong;
+import de.fraunhofer.iosb.ilt.frostserver.model.core.IdString;
 import static de.fraunhofer.iosb.ilt.frostserver.plugin.format.dataarray.DataArrayValue.LIST_OF_DATAARRAYVALUE;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -33,13 +33,13 @@ import org.junit.Test;
  *
  * @author jab
  */
-public class EntityParserTest {
+public class EntityParserTestStringId {
 
     private EntityParser entityParser;
 
     @Before
     public void setUp() {
-        entityParser = new EntityParser(IdLong.class);
+        entityParser = new EntityParser(IdString.class);
     }
 
     @Test
@@ -52,41 +52,41 @@ public class EntityParserTest {
         components.add("result");
         components.add("FeatureOfInterest/id");
 
-        Datastream ds1 = new Datastream().setId(new IdLong(1L));
+        Datastream ds1 = new Datastream().setId(new IdString("A"));
 
         DataArrayValue dav1 = new DataArrayValue(ds1, components);
         dav1.newItemList()
                 .addItemToTail("2010-12-23T10:20:00-0700")
                 .addItemToTail(20)
-                .addItemToTail(1);
+                .addItemToTail("A");
         dav1.newItemList()
                 .addItemToTail("2010-12-23T10:21:00-0700")
                 .addItemToTail(30)
-                .addItemToTail(1);
+                .addItemToTail("B");
 
-        Datastream ds2 = new Datastream().setId(new IdLong(2L));
+        Datastream ds2 = new Datastream().setId(new IdString("B"));
 
         DataArrayValue dav2 = new DataArrayValue(ds2, components);
         dav2.newItemList()
                 .addItemToTail("2010-12-23T10:20:00-0700")
                 .addItemToTail(65)
-                .addItemToTail(1);
+                .addItemToTail("C");
         dav2.newItemList()
                 .addItemToTail("2010-12-23T10:21:00-0700")
                 .addItemToTail(60)
-                .addItemToTail(1);
+                .addItemToTail("D");
 
-        MultiDatastream mds1 = new MultiDatastream().setId(new IdLong(2L));
+        MultiDatastream mds1 = new MultiDatastream().setId(new IdString("A"));
 
         DataArrayValue dav3 = new DataArrayValue(mds1, components);
         dav3.newItemList()
                 .addItemToTail("2010-12-23T10:20:00-0700")
                 .addItemToTail(65)
-                .addItemToTail(1);
+                .addItemToTail("A");
         dav3.newItemList()
                 .addItemToTail("2010-12-23T10:21:00-0700")
                 .addItemToTail(60)
-                .addItemToTail(1);
+                .addItemToTail("A");
 
         expectedResult.add(dav1);
         expectedResult.add(dav2);
@@ -99,7 +99,7 @@ public class EntityParserTest {
         String json = "[\n"
                 + "  {\n"
                 + "    \"Datastream\": {\n"
-                + "      \"@iot.id\": 1\n"
+                + "      \"@iot.id\": \"A\"\n"
                 + "    },\n"
                 + "    \"components\": [\n"
                 + "      \"phenomenonTime\",\n"
@@ -111,18 +111,18 @@ public class EntityParserTest {
                 + "      [\n"
                 + "        \"2010-12-23T10:20:00-0700\",\n"
                 + "        20,\n"
-                + "        1\n"
+                + "        \"A\"\n"
                 + "      ],\n"
                 + "      [\n"
                 + "        \"2010-12-23T10:21:00-0700\",\n"
                 + "        30,\n"
-                + "        1\n"
+                + "        \"B\"\n"
                 + "      ]\n"
                 + "    ]\n"
                 + "  },\n"
                 + "  {\n"
                 + "    \"Datastream\": {\n"
-                + "      \"@iot.id\": 2\n"
+                + "      \"@iot.id\": \"B\"\n"
                 + "    },\n"
                 + "    \"components\": [\n"
                 + "      \"phenomenonTime\",\n"
@@ -134,18 +134,18 @@ public class EntityParserTest {
                 + "      [\n"
                 + "        \"2010-12-23T10:20:00-0700\",\n"
                 + "        65,\n"
-                + "        1\n"
+                + "        \"C\"\n"
                 + "      ],\n"
                 + "      [\n"
                 + "        \"2010-12-23T10:21:00-0700\",\n"
                 + "        60,\n"
-                + "        1\n"
+                + "        \"D\"\n"
                 + "      ]\n"
                 + "    ]\n"
                 + "  },\n"
                 + "  {\n"
                 + "    \"MultiDatastream\": {\n"
-                + "      \"@iot.id\": 2\n"
+                + "      \"@iot.id\": \"A\"\n"
                 + "    },\n"
                 + "    \"components\": [\n"
                 + "      \"phenomenonTime\",\n"
@@ -157,12 +157,12 @@ public class EntityParserTest {
                 + "      [\n"
                 + "        \"2010-12-23T10:20:00-0700\",\n"
                 + "        65,\n"
-                + "        1\n"
+                + "        \"A\"\n"
                 + "      ],\n"
                 + "      [\n"
                 + "        \"2010-12-23T10:21:00-0700\",\n"
                 + "        60,\n"
-                + "        1\n"
+                + "        \"A\"\n"
                 + "      ]\n"
                 + "    ]\n"
                 + "  }\n"
